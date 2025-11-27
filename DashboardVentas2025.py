@@ -61,17 +61,6 @@ top_5_products_sales_profit = top_5_products_sales_profit.sort_values(by='Sales'
 st.subheader('Tabla de Ventas y Profit de los Top 5 Productos Más Vendidos:')
 st.dataframe(top_5_products_sales_profit)
 
-# --- 5. Relationship between Profit and Sales for Top 5 Best-Selling Products ---
-st.header('5. Relación entre Profit y Ventas de los Top 5 Productos Más Vendidos')
-fig_sales_profit_relation = px.scatter(top_5_products_sales_profit,
-                                       x='Sales',
-                                       y='Profit',
-                                       text='Product Name',
-                                       title='Ventas vs. Profit para los Top 5 Productos Más Vendidos',
-                                       labels={'Sales': 'Total Ventas', 'Profit': 'Total Profit'})
-fig_sales_profit_relation.update_traces(textposition='top center')
-st.plotly_chart(fig_sales_profit_relation, use_container_width=True)
-
 # --- 6. Top 5 Most Profitable Products (with formatted names) ---
 st.header('6. Top 5 Productos Más Rentables')
 # Group by 'Product Name' and sum 'Profit' to find products with highest profit, then take the top 5
