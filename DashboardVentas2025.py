@@ -22,50 +22,99 @@ except Exception as e:
 
 import streamlit as st
 import pandas as pd
+import altair as alt
 
-st.title("📊 Dashboard por Tipo de Región")
+st.title("📊 Product Performance Analysis")
 
-# Ruta del archivo que ya está dentro del proyecto
-ruta_archivo = "SalidaFinal.xlsx"    
+# Cargar archivo Excel que ya está subido
+ruta_archivo = "SalidaFinal.xlsx"
 
 try:
     df = pd.read_excel(ruta_archivo, engine="openpyxl")
-    st.success("Archivo cargado correctamente ✔")
+    st.success("Data loaded successfully!")
 
-    # Buscar columna región
-    region_col = None
-    posibles = ["region", "región", "zona", "zonas", "regiones"]
+    # -------------------------------------------------------------
+    # DETECTAR COLUMNAS DE REGIÓN Y ESTADO (por si tienen acentos)
+    # -------------------------------------------------------------
+    col_region = None
+    col_estado = None
 
     for col in df.columns:
-        if col.lower() in posibles:
-            region_col = col
-            break
+        if col.lower() in ["region", "región", "zona", "area"]:
+            col_region = col
+        if col.lower() in ["state", "estado", "provincia"]:
+            col_estado = col
 
-    if region_col is None:
-        st.error("No se encontró ninguna columna de región.")
-        st.dataframe(df)
+    if col_region is None or col_estado is None:
+        st.error("No se encontraron columnas de región o estado en el archivo.")
+        st.write(df.head())
+
     else:
-        # Crear filtro
-        regiones = ["Todas"] + sorted(df[region_col].dropna().unique().tolist())
+        # ---------------------------------------------------------
+        # SIDEBAR — FILTROS
+        # ---------------------------------------------------------
+        st.sidebar.header("Filters")
 
-        seleccion = st.selectbox("Selecciona una región:", regiones)
+        regiones = ["Todas"] + sorted(df[col_region].dropna().unique().tolist())
+        estados = ["Todas"] + sorted(df[col_estado].dropna().unique().unique().tolist())
 
-        # Filtrar
-        if seleccion == "Todas":
-            df_filtrado = df
+        filtro_region = st.sidebar.selectbox("Select Region", regiones)
+        filtro_estado = st.sidebar.selectbox("Select State", estados)
+
+        mostrar_df = st.sidebar.checkbox("Show Filtered Data")
+
+        # ---------------------------------------------------------
+        # APLICAR FILTROS
+        # ---------------------------------------------------------
+        df_filtrado = df.copy()
+
+        if filtro_region != "Todas":
+            df_filtrado = df_filtrado[df_filtrado[col_region] == filtro_region]
+
+        if filtro_estado != "Todas":
+            df_filtrado = df_filtrado[df_filtrado[col_estado] == filtro_estado]
+
+        st.subheader("Filtered Data")
+
+        # ---------------------------------------------------------
+        # MOSTRAR TABLA SI EL CHECKBOX ESTÁ ACTIVADO
+        # ---------------------------------------------------------
+        if mostrar_df:
+            st.dataframe(df_filtrado)
+
+        # ---------------------------------------------------------
+        # MOSTRAR GRÁFICA (sales por producto)
+        # ---------------------------------------------------------
+        if len(df_filtrado) > 0:
+
+            # Validar si existe la columna Sales
+            if "Sales" in df_filtrado.columns:
+
+                grafica = (
+                    alt.Chart(df_filtrado)
+                    .mark_bar()
+                    .encode(
+                        x=alt.X("Product Name:N", sort="-y"),
+                        y=alt.Y("Sales:Q"),
+                        tooltip=["Product Name", "Sales"]
+                    )
+                    .properties(
+                        width=800,
+                        height=400,
+                        title="Sales by Product"
+                    )
+                )
+
+                st.altair_chart(grafica, use_container_width=True)
+
+            else:
+                st.warning("La columna 'Sales' no existe en el Excel.")
         else:
-            df_filtrado = df[df[region_col] == seleccion]
+            st.warning("No hay datos con los filtros seleccionados.")
 
-        # Mostrar tabla
-        st.subheader(f"Resultados para: **{seleccion}**")
-        st.dataframe(df_filtrado)
-
-except FileNotFoundError:
-    st.error(f"No se encontró el archivo en la ruta: {ruta_archivo}")
 except Exception as e:
-    st.error(f"Error al cargar el archivo: {e}")
-
-
+    st.error(f"Error: {e}")
+    
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
 # Group by 'Sub-Category' and sum 'Sales' to find best-selling products, then take the top 5
