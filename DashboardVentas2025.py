@@ -25,41 +25,45 @@ import pandas as pd
 
 st.title("📊 Dashboard por Tipo de Región")
 
-# Subir archivo
-archivo = st.file_uploader("Sube tu archivo Excel", type=["xlsx", "xls"])
+# Ruta del archivo que ya está dentro del proyecto
+ruta_archivo = "SalidaFinal.xlsx"    
 
-if archivo is not None:
-    try:
-        df = pd.read_excel(archivo, engine="openpyxl")  # Cargar Excel con openpyxl
-        st.success("Archivo cargado correctamente ✔")
-        
-        # --- Identificar columna región ---
-        region_col = None
-        posibles = ["region", "región", "zona", "zonas", "regiones"]
+try:
+    df = pd.read_excel(ruta_archivo, engine="openpyxl")
+    st.success("Archivo cargado correctamente ✔")
 
-        for col in df.columns:
-            if col.lower() in posibles:
-                region_col = col
-                break
+    # Buscar columna región
+    region_col = None
+    posibles = ["region", "región", "zona", "zonas", "regiones"]
 
-        if region_col:
-            # --- Crear filtro ---
-            regiones = df[region_col].dropna().unique().tolist()
-            region_seleccionada = st.selectbox("Selecciona una región", regiones)
+    for col in df.columns:
+        if col.lower() in posibles:
+            region_col = col
+            break
 
-            # --- FILTRAR TABLA ---
-            df_filtrado = df[df[region_col] == region_seleccionada]
+    if region_col is None:
+        st.error("No se encontró ninguna columna de región.")
+        st.dataframe(df)
+    else:
+        # Crear filtro
+        regiones = ["Todas"] + sorted(df[region_col].dropna().unique().tolist())
 
-            # --- Mostrar tabla ---
-            st.subheader(f"Resultados para la región: **{region_seleccionada}**")
-            st.dataframe(df_filtrado)
+        seleccion = st.selectbox("Selecciona una región:", regiones)
 
+        # Filtrar
+        if seleccion == "Todas":
+            df_filtrado = df
         else:
-            st.warning("⚠ No se encontró ninguna columna de región en el archivo.")
-            st.dataframe(df)
+            df_filtrado = df[df[region_col] == seleccion]
 
-    except Exception as e:
-        st.error(f"Error al cargar el archivo: {e}")
+        # Mostrar tabla
+        st.subheader(f"Resultados para: **{seleccion}**")
+        st.dataframe(df_filtrado)
+
+except FileNotFoundError:
+    st.error(f"No se encontró el archivo en la ruta: {ruta_archivo}")
+except Exception as e:
+    st.error(f"Error al cargar el archivo: {e}")
 
 
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
