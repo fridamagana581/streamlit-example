@@ -20,24 +20,20 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-def main():
-    st.title("Dashboard con Filtro por Región")
+# Crear filtro de región (solo si existe la columna)
+region_col = None
+for col in df.columns:
+    if col.lower() in ["region", "región", "regiones"]:
+        region_col = col
+        break
 
-    # Cargar el archivo directamente desde tu carpeta
-    file_path = "SalidaFinal.xlsx"   # <-- asegúrate del nombre exacto
-    df = load_data(file_path)
-
-    # Filtro por región
-    regiones = ["Todas"] + sorted(df["Region"].unique().tolist())
-    seleccion = st.selectbox("Selecciona una región:", regiones)
-
-    # Filtrar
-    df_filtrado = df if seleccion == "Todas" else df[df["Region"] == seleccion]
-
-    # Gráficas
-    st.plotly_chart(plot_top_selling_products(df_filtrado))
-    st.plotly_chart(plot_top_profitable_products(df_filtrado))
-
+if region_col:
+    regiones = df[region_col].dropna().unique()
+    region_seleccionada = st.selectbox("Selecciona una región", regiones)
+    df_filtrado = df[df[region_col] == region_seleccionada]
+else:
+    st.warning("No se encontró una columna de región en el archivo.")
+    df_filtrado = df
 
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
