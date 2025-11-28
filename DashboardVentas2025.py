@@ -26,32 +26,22 @@ import altair as alt
 
 st.title("📊 Product Performance Analysis")
 
-# Archivo ya cargado en tu app
+# Cargar archivo Excel ya subido
 ruta_archivo = "SalidaFinal.xlsx"
 
 try:
     df = pd.read_excel(ruta_archivo, engine="openpyxl")
     st.success("Data loaded successfully!")
 
-    # ---------------------------------------------------------
-    # COLUMNAS EXACTAS SEGÚN TU EXCEL
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
+    # DETECTAR COLUMNAS DE REGIÓN Y ESTADO
+    # -------------------------------------------------------------
     col_region = "Region"
     col_estado = "State"
-    col_producto = "Product Name"
-    col_sales = "Sales"
 
-    # Validar que existan
-    columnas = df.columns.tolist()
-    for col in [col_region, col_estado, col_producto, col_sales]:
-        if col not in columnas:
-            st.error(f"La columna **{col}** no existe en el Excel. Revisa el nombre.")
-            st.write(df.head())
-            st.stop()
-
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
     # SIDEBAR — FILTROS
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
     st.sidebar.header("Filters")
 
     regiones = ["Todas"] + sorted(df[col_region].dropna().unique().tolist())
@@ -59,11 +49,12 @@ try:
 
     filtro_region = st.sidebar.selectbox("Select Region", regiones)
     filtro_estado = st.sidebar.selectbox("Select State", estados)
+
     mostrar_df = st.sidebar.checkbox("Show Filtered Data")
 
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
     # APLICAR FILTROS
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
     df_filtrado = df.copy()
 
     if filtro_region != "Todas":
@@ -74,23 +65,41 @@ try:
 
     st.subheader("Filtered Data")
 
-    # Mostrar DataFrame SOLO si el checkbox está activado
+    # Mostrar DataFrame si checkbox está activo
     if mostrar_df:
         st.dataframe(df_filtrado)
 
-    # ---------------------------------------------------------
-    # GRÁFICA DINÁMICA
-    # ---------------------------------------------------------
+    # -------------------------------------------------------------
+    # CREAR GRÁFICA
+    # -------------------------------------------------------------
     if len(df_filtrado) > 0:
 
-        grafica = (
-            alt.Chart(df_filtrado)
-            .mark_bar()
-            .encode(
-                x=alt.X(f"{col_producto}:N", sort="-y"),
-                y=alt.Y(f"{col_sales}:Q"),
-                tooltip=[col_producto, col_sales]
+        if "Sales" in df_filtrado.columns:
+
+            grafica = (
+                alt.Chart(df_filtrado)
+                .mark_bar()
+                .encode(
+                    x=alt.X("Product Name:N", sort="-y"),
+                    y=alt.Y("Sales:Q"),
+                    tooltip=["Product Name", "Sales"]
+                )
+                .properties(
+                    width=800,
+                    height=400,
+                    title="Sales by Product"
+                )
             )
+
+            st.altair_chart(grafica, use_container_width=True)
+
+        else:
+            st.warning("La columna 'Sales' no existe en el archivo.")
+    else:
+        st.warning("No hay datos con los filtros seleccionados.")
+
+except Exception as e:
+    st.error(f"Error: {e}")
 
     
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
