@@ -85,16 +85,12 @@ try:
 
         titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
 
-     grafica = (
+  grafica = (
     alt.Chart(top5)
-    .mark_bar(color="#4B8BFF")
+    .mark_bar()
     .encode(
-        x=alt.X(col_producto + ":N",
-                sort="-y",
-                title="Product Name",
-                axis=alt.Axis(labelAngle=0, labelLimit=300)
-        ),
-        y=alt.Y(col_sales + ":Q", title="Total Sales"),
+        x=alt.X(col_producto, sort="-y", title="Product Name"),
+        y=alt.Y(col_sales, title="Total Sales"),
         tooltip=[col_producto, col_sales]
     )
     .properties(
@@ -102,7 +98,13 @@ try:
         height=500,
         title=titulo
     )
+    .configure_axis(
+        labelAngle=0,      
+        labelLimit=300,    
+        labelFontSize=12
+    )
 )
+
 
 
         st.altair_chart(grafica, use_container_width=True)
