@@ -20,37 +20,24 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-@st.cache_data
-def load_data(uploaded_file):
-    return pd.read_excel(uploaded_file)
-
-def plot_top_selling(df):
-    sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
-    top = sales.head(5)
-    return px.bar(top, x=top.index, y=top.values, title="Top 5 Selling Products")
-
-def plot_top_profit(df):
-    profit = df.groupby("Product Name")["Profit"].sum().sort_values(ascending=False)
-    top = profit.head(5)
-    return px.bar(top, x=top.index, y=top.values, title="Top 5 Profitable Products")
-
 def main():
     st.title("Dashboard con Filtro por Región")
 
-    file = st.file_uploader("Sube tu Excel", type=["xlsx"])
-    if file:
-        df = load_data(file)
+    # Cargar el archivo directamente desde tu carpeta
+    file_path = "SalidaFinal.xlsx"   # <-- asegúrate del nombre exacto
+    df = load_data(file_path)
 
-        regiones = ["Todas"] + sorted(df["Region"].unique().tolist())
-        seleccion = st.selectbox("Selecciona una región:", regiones)
+    # Filtro por región
+    regiones = ["Todas"] + sorted(df["Region"].unique().tolist())
+    seleccion = st.selectbox("Selecciona una región:", regiones)
 
-        df_filtrado = df if seleccion == "Todas" else df[df["Region"] == seleccion]
+    # Filtrar
+    df_filtrado = df if seleccion == "Todas" else df[df["Region"] == seleccion]
 
-        st.plotly_chart(plot_top_selling(df_filtrado))
-        st.plotly_chart(plot_top_profit(df_filtrado))
+    # Gráficas
+    st.plotly_chart(plot_top_selling_products(df_filtrado))
+    st.plotly_chart(plot_top_profitable_products(df_filtrado))
 
-if __name__ == "__main__":
-    main()
 
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
