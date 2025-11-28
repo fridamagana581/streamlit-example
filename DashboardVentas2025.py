@@ -33,15 +33,15 @@ try:
     df = pd.read_excel(ruta_archivo, engine="openpyxl")
     st.success("Data loaded successfully!")
 
-    # -------------------------------------------------------------
-    # DETECTAR COLUMNAS DE REGIÓN Y ESTADO
-    # -------------------------------------------------------------
+    # Detectar columnas
     col_region = "Region"
     col_estado = "State"
+    col_producto = "Product Name"
+    col_sales = "Sales"
 
-    # -------------------------------------------------------------
-    # SIDEBAR — FILTROS
-    # -------------------------------------------------------------
+    # ---------------------------------------------------------
+    # SIDEBAR: FILTROS
+    # ---------------------------------------------------------
     st.sidebar.header("Filters")
 
     regiones = ["Todas"] + sorted(df[col_region].dropna().unique().tolist())
@@ -52,9 +52,9 @@ try:
 
     mostrar_df = st.sidebar.checkbox("Show Filtered Data")
 
-    # -------------------------------------------------------------
-    # APLICAR FILTROS
-    # -------------------------------------------------------------
+    # ---------------------------------------------------------
+    # FILTRAR DATOS
+    # ---------------------------------------------------------
     df_filtrado = df.copy()
 
     if filtro_region != "Todas":
@@ -65,36 +65,43 @@ try:
 
     st.subheader("Filtered Data")
 
-    # Mostrar DataFrame si checkbox está activo
+    # Mostrar tabla si el checkbox está activado
     if mostrar_df:
         st.dataframe(df_filtrado)
 
-    # -------------------------------------------------------------
-    # CREAR GRÁFICA
-    # -------------------------------------------------------------
+    # ---------------------------------------------------------
+    # GRÁFICA TOP 5 PRODUCTOS MÁS VENDIDOS
+    # ---------------------------------------------------------
     if len(df_filtrado) > 0:
 
-        if "Sales" in df_filtrado.columns:
+        # Agrupar por producto y sumar ventas
+        top5 = (
+            df_filtrado.groupby(col_producto)[col_sales]
+            .sum()
+            .sort_values(ascending=False)
+            .head(5)
+            .reset_index()
+        )
 
-            grafica = (
-                alt.Chart(df_filtrado)
-                .mark_bar()
-                .encode(
-                    x=alt.X("Product Name:N", sort="-y"),
-                    y=alt.Y("Sales:Q"),
-                    tooltip=["Product Name", "Sales"]
-                )
-                .properties(
-                    width=800,
-                    height=400,
-                    title="Sales by Product"
-                )
+        titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
+
+        grafica = (
+            alt.Chart(top5)
+            .mark_bar(color="#4B8BFF")
+            .encode(
+                x=alt.X(col_producto, sort="-y", title="Product Name"),
+                y=alt.Y(col_sales, title="Total Sales"),
+                tooltip=[col_producto, col_sales]
             )
+            .properties(
+                width=750,
+                height=450,
+                title=titulo
+            )
+        )
 
-            st.altair_chart(grafica, use_container_width=True)
+        st.altair_chart(grafica, use_container_width=True)
 
-        else:
-            st.warning("La columna 'Sales' no existe en el archivo.")
     else:
         st.warning("No hay datos con los filtros seleccionados.")
 
