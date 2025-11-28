@@ -82,29 +82,26 @@ if len(df_filtrado) > 0:
         .reset_index()
     )
 
-    # ❗ Hacer que los nombres salgan horizontales
+
     top5["Product Name"] = top5["Product Name"].astype(str)
 
     titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
 
-    grafica = (
-        alt.Chart(top5)
-        .mark_bar(color="#4B8BFF")
-        .encode(
-            x=alt.X("Product Name:N",
-                    sort="-y",
-                    title="Product Name",
-                    axis=alt.Axis(labelAngle=0)  
-            ),
-            y=alt.Y("Sales:Q", title="Total Sales"),
-            tooltip=["Product Name", "Sales"]
-        )
-        .properties(
-            width=800,
-            height=450,
-            title=titulo
-        )
+ grafica = (
+    alt.Chart(top5)
+    .mark_bar(color="#4B8BFF")
+    .encode(
+        x=alt.X(col_producto, sort="-y", title="Product Name"),
+        y=alt.Y(col_sales, title="Total Sales"),
+        tooltip=[col_producto, col_sales]
     )
+    .properties(
+        width=750,
+        height=450,
+        title=titulo
+    )
+)
+
 
     st.altair_chart(grafica, use_container_width=True)
 
