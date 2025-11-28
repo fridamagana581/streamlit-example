@@ -89,7 +89,13 @@ try:
             alt.Chart(top5)
             .mark_bar(color="#4B8BFF")
             .encode(
-                x=alt.X(col_producto, sort="-y", title="Product Name"),
+                x=alt.X(
+    col_producto,
+    sort="-y",
+    title="Product Name",
+    axis=alt.Axis(labelAngle=0, labelLimit=250)
+),
+
                 y=alt.Y(col_sales, title="Total Sales"),
                 tooltip=[col_producto, col_sales]
             )
