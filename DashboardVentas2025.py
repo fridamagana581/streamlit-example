@@ -20,11 +20,15 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
+import streamlit as st
+import pandas as pd
+import plotly.express as px
 
 @st.cache_data
 def load_data(uploaded_file):
     return pd.read_excel(uploaded_file)
 
+# --- PLOTTING FUNCTIONS ---
 def plot_top_selling_products(df):
     product_sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
     top_5 = product_sales.head(5)
@@ -53,6 +57,7 @@ def plot_top_profitable_products(df):
     fig.update_layout(xaxis={"categoryorder": "total descending"})
     return fig
 
+# --- MAIN APP ---
 def main():
     st.title("Product Analysis Dashboard")
 
@@ -61,14 +66,29 @@ def main():
     if uploaded_file is not None:
         df = load_data(uploaded_file)
 
-        st.write("## Data Preview")
-        st.dataframe(df.head())
+        st.write("### Filtro por Región")
 
-        st.write("## Top 5 Selling Products")
-        st.plotly_chart(plot_top_selling_products(df))
+        # LISTA DE REGIONES + opción "Todas"
+        regiones = ["Todas"] + sorted(df["Region"].dropna().unique().tolist())
 
-        st.write("## Top 5 Most Profitable Products")
-        st.plotly_chart(plot_top_profitable_products(df))
+        seleccion = st.selectbox("Selecciona una región:", regiones)
+
+        # FILTRAR DATOS
+        if seleccion == "Todas":
+            df_filtrado = df
+        else:
+            df_filtrado = df[df["Region"] == seleccion]
+
+        st.write(f"### Mostrando datos para: **{seleccion}**")
+        st.dataframe(df_filtrado.head())
+
+        # GRÁFICAS FILTRADAS
+        st.write("## Top 5 Productos Más Vendidos")
+        st.plotly_chart(plot_top_selling_products(df_filtrado))
+
+        st.write("## Top 5 Productos Más Rentables")
+        st.plotly_chart(plot_top_profitable_products(df_filtrado))
+
     else:
         st.info("Por favor sube un archivo Excel para comenzar.")
 
