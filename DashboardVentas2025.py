@@ -20,77 +20,34 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-
 @st.cache_data
 def load_data(uploaded_file):
     return pd.read_excel(uploaded_file)
 
-# --- PLOTTING FUNCTIONS ---
-def plot_top_selling_products(df):
-    product_sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
-    top_5 = product_sales.head(5)
+def plot_top_selling(df):
+    sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
+    top = sales.head(5)
+    return px.bar(top, x=top.index, y=top.values, title="Top 5 Selling Products")
 
-    fig = px.bar(
-        top_5,
-        x=top_5.index,
-        y=top_5.values,
-        labels={"x": "Product Name", "y": "Sales"},
-        title="Top 5 Selling Products"
-    )
-    fig.update_layout(xaxis={"categoryorder": "total descending"})
-    return fig
+def plot_top_profit(df):
+    profit = df.groupby("Product Name")["Profit"].sum().sort_values(ascending=False)
+    top = profit.head(5)
+    return px.bar(top, x=top.index, y=top.values, title="Top 5 Profitable Products")
 
-def plot_top_profitable_products(df):
-    product_profit = df.groupby("Product Name")["Profit"].sum().sort_values(ascending=False)
-    top_5 = product_profit.head(5)
-
-    fig = px.bar(
-        top_5,
-        x=top_5.index,
-        y=top_5.values,
-        labels={"x": "Product Name", "y": "Profit"},
-        title="Top 5 Most Profitable Products"
-    )
-    fig.update_layout(xaxis={"categoryorder": "total descending"})
-    return fig
-
-# --- MAIN APP ---
 def main():
-    st.title("Product Analysis Dashboard")
+    st.title("Dashboard con Filtro por Región")
 
-    uploaded_file = st.file_uploader("Sube tu archivo Excel", type=["xlsx"])
+    file = st.file_uploader("Sube tu Excel", type=["xlsx"])
+    if file:
+        df = load_data(file)
 
-    if uploaded_file is not None:
-        df = load_data(uploaded_file)
-
-        st.write("### Filtro por Región")
-
-        # LISTA DE REGIONES + opción "Todas"
-        regiones = ["Todas"] + sorted(df["Region"].dropna().unique().tolist())
-
+        regiones = ["Todas"] + sorted(df["Region"].unique().tolist())
         seleccion = st.selectbox("Selecciona una región:", regiones)
 
-        # FILTRAR DATOS
-        if seleccion == "Todas":
-            df_filtrado = df
-        else:
-            df_filtrado = df[df["Region"] == seleccion]
+        df_filtrado = df if seleccion == "Todas" else df[df["Region"] == seleccion]
 
-        st.write(f"### Mostrando datos para: **{seleccion}**")
-        st.dataframe(df_filtrado.head())
-
-        # GRÁFICAS FILTRADAS
-        st.write("## Top 5 Productos Más Vendidos")
-        st.plotly_chart(plot_top_selling_products(df_filtrado))
-
-        st.write("## Top 5 Productos Más Rentables")
-        st.plotly_chart(plot_top_profitable_products(df_filtrado))
-
-    else:
-        st.info("Por favor sube un archivo Excel para comenzar.")
+        st.plotly_chart(plot_top_selling(df_filtrado))
+        st.plotly_chart(plot_top_profit(df_filtrado))
 
 if __name__ == "__main__":
     main()
