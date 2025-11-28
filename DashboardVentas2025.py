@@ -20,55 +20,57 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-# Function to create the top selling products bar chart 
+
+@st.cache_data
+def load_data(uploaded_file):
+    return pd.read_excel(uploaded_file)
+
 def plot_top_selling_products(df):
     product_sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
-    top_5_products = product_sales.head(5)
+    top_5 = product_sales.head(5)
 
     fig = px.bar(
-        top_5_products,
-        x=top_5_products.index,
-        y=top_5_products.values,
-        labels={'x': 'Product Name', 'y': 'Sales'},
-        title='Top 5 Selling Products'
+        top_5,
+        x=top_5.index,
+        y=top_5.values,
+        labels={"x": "Product Name", "y": "Sales"},
+        title="Top 5 Selling Products"
     )
-
-    fig.update_layout(xaxis={'categoryorder': 'total descending'})
+    fig.update_layout(xaxis={"categoryorder": "total descending"})
     return fig
 
-# Function to create the top profitable products bar chart 
 def plot_top_profitable_products(df):
     product_profit = df.groupby("Product Name")["Profit"].sum().sort_values(ascending=False)
-    top_5_products = product_profit.head(5)
+    top_5 = product_profit.head(5)
 
     fig = px.bar(
-        top_5_products,
-        x=top_5_products.index,
-        y=top_5_products.values,
-        labels={'x': 'Product Name', 'y': 'Profit'},
-        title='Top 5 Most Profitable Products'
+        top_5,
+        x=top_5.index,
+        y=top_5.values,
+        labels={"x": "Product Name", "y": "Profit"},
+        title="Top 5 Most Profitable Products"
     )
-
-    fig.update_layout(xaxis={'categoryorder': 'total descending'})
+    fig.update_layout(xaxis={"categoryorder": "total descending"})
     return fig
 
-# Main Streamlit app
 def main():
     st.title("Product Analysis Dashboard")
 
-    file_path = "SalidaFinal.xlsx"
-    df = load_data(file_path)
+    uploaded_file = st.file_uploader("Sube tu archivo Excel", type=["xlsx"])
 
-    st.write("## Data Preview")
-    st.dataframe(df.head())
+    if uploaded_file is not None:
+        df = load_data(uploaded_file)
 
-    st.write("## Top 5 Selling Products")
-    sales_fig = plot_top_selling_products(df)
-    st.plotly_chart(sales_fig)
+        st.write("## Data Preview")
+        st.dataframe(df.head())
 
-    st.write("## Top 5 Most Profitable Products")
-    profit_fig = plot_top_profitable_products(df)
-    st.plotly_chart(profit_fig)
+        st.write("## Top 5 Selling Products")
+        st.plotly_chart(plot_top_selling_products(df))
+
+        st.write("## Top 5 Most Profitable Products")
+        st.plotly_chart(plot_top_profitable_products(df))
+    else:
+        st.info("Por favor sube un archivo Excel para comenzar.")
 
 if __name__ == "__main__":
     main()
