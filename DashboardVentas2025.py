@@ -85,26 +85,25 @@ try:
 
         titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
 
-        grafica = (
-            alt.Chart(top5)
-            .mark_bar(color="#4B8BFF")
-            .encode(
-                x=alt.X(
-    col_producto,
-    sort="-y",
-    title="Product Name",
-    axis=alt.Axis(labelAngle=0, labelLimit=250)
-),
+     grafica = (
+    alt.Chart(top5)
+    .mark_bar(color="#4B8BFF")
+    .encode(
+        x=alt.X(col_producto + ":N",
+                sort="-y",
+                title="Product Name",
+                axis=alt.Axis(labelAngle=0, labelLimit=300)
+        ),
+        y=alt.Y(col_sales + ":Q", title="Total Sales"),
+        tooltip=[col_producto, col_sales]
+    )
+    .properties(
+        width=900,
+        height=500,
+        title=titulo
+    )
+)
 
-                y=alt.Y(col_sales, title="Total Sales"),
-                tooltip=[col_producto, col_sales]
-            )
-            .properties(
-                width=750,
-                height=450,
-                title=titulo
-            )
-        )
 
         st.altair_chart(grafica, use_container_width=True)
 
