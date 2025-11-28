@@ -20,12 +20,6 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-# Function to load the data 
-@st.cache_data
-def load_data(file_path):
-    df = pd.read_excel(file_path)
-    return df
-
 # Function to create the top selling products bar chart 
 def plot_top_selling_products(df):
     product_sales = df.groupby("Product Name")["Sales"].sum().sort_values(ascending=False)
