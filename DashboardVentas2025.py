@@ -20,20 +20,47 @@ except Exception as e:
     st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop() # Stop the app if data loading fails
 
-# Crear filtro de región (solo si existe la columna)
-region_col = None
-for col in df.columns:
-    if col.lower() in ["region", "región", "regiones"]:
-        region_col = col
-        break
+import streamlit as st
+import pandas as pd
 
-if region_col:
-    regiones = df[region_col].dropna().unique()
-    region_seleccionada = st.selectbox("Selecciona una región", regiones)
-    df_filtrado = df[df[region_col] == region_seleccionada]
-else:
-    st.warning("No se encontró una columna de región en el archivo.")
-    df_filtrado = df
+st.title("📊 Dashboard por Tipo de Región")
+
+# Subir archivo
+archivo = st.file_uploader("Sube tu archivo Excel", type=["xlsx", "xls"])
+
+if archivo is not None:
+    try:
+        df = pd.read_excel(archivo, engine="openpyxl")  # Cargar Excel con openpyxl
+        st.success("Archivo cargado correctamente ✔")
+        
+        # --- Identificar columna región ---
+        region_col = None
+        posibles = ["region", "región", "zona", "zonas", "regiones"]
+
+        for col in df.columns:
+            if col.lower() in posibles:
+                region_col = col
+                break
+
+        if region_col:
+            # --- Crear filtro ---
+            regiones = df[region_col].dropna().unique().tolist()
+            region_seleccionada = st.selectbox("Selecciona una región", regiones)
+
+            # --- FILTRAR TABLA ---
+            df_filtrado = df[df[region_col] == region_seleccionada]
+
+            # --- Mostrar tabla ---
+            st.subheader(f"Resultados para la región: **{region_seleccionada}**")
+            st.dataframe(df_filtrado)
+
+        else:
+            st.warning("⚠ No se encontró ninguna columna de región en el archivo.")
+            st.dataframe(df)
+
+    except Exception as e:
+        st.error(f"Error al cargar el archivo: {e}")
+
 
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
