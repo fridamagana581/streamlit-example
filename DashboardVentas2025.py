@@ -22,92 +22,105 @@ except Exception as e:
 
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 import altair as alt
 
 st.set_page_config(layout="wide")
-st.title("📊 Product Performance Analysis")
+st.title('Análisis de Ventas y Profitability')
 
-# ---- Cargar Excel ----
-file_path = "SalidaFinal.xlsx"
+# --- 1. Load Data ---
+st.header('1. Carga de Datos')
+file_path = 'SalidaFinal.xlsx'
 
 try:
     df = pd.read_excel(file_path)
-    st.success(f"Archivo {file_path} cargado exitosamente.")
+    st.success(f'Archivo {file_path} cargado exitosamente.')
+    st.subheader('Primeras 5 filas del DataFrame:')
+    st.dataframe(df.head())
+    st.subheader('Tipos de datos de las columnas:')
+    st.dataframe(df.dtypes)
 except Exception as e:
-    st.error(f"Error al cargar archivo: {e}")
+    st.error(f'Error al cargar el archivo Excel: {e}. Asegúrate de que la ruta sea correcta y el archivo esté accesible.')
     st.stop()
 
-# -------------------------------------------------------------------
-# SIDEBAR: FILTROS
-# -------------------------------------------------------------------
-st.sidebar.header("Filters")
+# -----------------------------
+#       ALTAR + FILTROS
+# -----------------------------
 
-regiones = ["Todas"] + sorted(df["Region"].dropna().unique().tolist())
-estados = ["Todas"] + sorted(df["State"].dropna().unique().tolist())
+st.title("📊 Product Performance Analysis")
 
-filtro_region = st.sidebar.selectbox("Select Region", regiones)
-filtro_estado = st.sidebar.selectbox("Select State", estados)
+ruta_archivo = "SalidaFinal.xlsx"
 
-mostrar_df = st.sidebar.checkbox("Show Filtered Data")
+try:
+    df = pd.read_excel(ruta_archivo, engine="openpyxl")
+    st.success("Data loaded successfully!")
 
-# -------------------------------------------------------------------
-# APLICAR FILTROS
-# -------------------------------------------------------------------
-df_filtrado = df.copy()
+    col_region = "Region"
+    col_estado = "State"
+    col_producto = "Product Name"
+    col_sales = "Sales"
 
-if filtro_region != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["Region"] == filtro_region]
+    st.sidebar.header("Filters")
 
-if filtro_estado != "Todas":
-    df_filtrado = df_filtrado[df_filtrado["State"] == filtro_estado]
+    regiones = ["Todas"] + sorted(df[col_region].dropna().unique().tolist())
+    estados = ["Todas"] + sorted(df[col_estado].dropna().unique().tolist())
 
-# -------------------------------------------------------------------
-# MOSTRAR TABLA SI EL CHECKBOX ESTÁ ACTIVADO
-# -------------------------------------------------------------------
-st.subheader("Filtered Data")
+    filtro_region = st.sidebar.selectbox("Select Region", regiones)
+    filtro_estado = st.sidebar.selectbox("Select State", estados)
 
-if mostrar_df:
-    st.dataframe(df_filtrado, use_container_width=True)
+    mostrar_df = st.sidebar.checkbox("Show Filtered Data")
 
-# -------------------------------------------------------------------
-# GRÁFICA TOP 5 PRODUCTOS MÁS VENDIDOS
-# -------------------------------------------------------------------
-if len(df_filtrado) > 0:
+    df_filtrado = df.copy()
 
-    top5 = (
-        df_filtrado.groupby("Product Name")["Sales"]
-        .sum()
-        .sort_values(ascending=False)
-        .head(5)
-        .reset_index()
-    )
+    if filtro_region != "Todas":
+        df_filtrado = df_filtrado[df_filtrado[col_region] == filtro_region]
 
+    if filtro_estado != "Todas":
+        df_filtrado = df_filtrado[df_fil_estado == filtro_estado]
 
-    top5["Product Name"] = top5["Product Name"].astype(str)
+    st.subheader("Filtered Data")
 
-    titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
+    if mostrar_df:
+        st.dataframe(df_filtrado)
 
- grafica = (
-    alt.Chart(top5)
-    .mark_bar(color="#4B8BFF")
-    .encode(
-        x=alt.X(col_producto, sort="-y", title="Product Name"),
-        y=alt.Y(col_sales, title="Total Sales"),
-        tooltip=[col_producto, col_sales]
-    )
-    .properties(
-        width=750,
-        height=450,
-        title=titulo
-    )
-)
+    # -------------------------
+    #   GRÁFICA CON NOMBRES
+    #   HORIZONTALES + COMPLETOS
+    # -------------------------
+    if len(df_filtrado) > 0:
+        top5 = (
+            df_filtrado.groupby(col_producto)[col_sales]
+            .sum()
+            .sort_values(ascending=False)
+            .head(5)
+            .reset_index()
+        )
 
+        titulo = f"Top 5 Best-Selling Products ({filtro_region}, {filtro_estado})"
 
-    st.altair_chart(grafica, use_container_width=True)
+        grafica = (
+            alt.Chart(top5)
+            .mark_bar(color="#4B8BFF")
+            .encode(
+                x=alt.X(
+                    col_producto,
+                    sort="-y",
+                    title="Product Name",
+                    axis=alt.Axis(labelAngle=0, labelLimit=0)  # ← ***AQUÍ EL CAMBIO MÁGICO***
+                ),
+                y=alt.Y(col_sales, title="Total Sales"),
+                tooltip=[col_producto, col_sales]
+            )
+            .properties(width=750, height=450, title=titulo)
+        )
 
-else:
-    st.warning("No hay datos con los filtros seleccionados.")
+        st.altair_chart(grafica, use_container_width=True)
 
+    else:
+        st.warning("No hay datos con los filtros seleccionados.")
+
+except Exception as e:
+    st.error(f"Error: {e}")
     
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
