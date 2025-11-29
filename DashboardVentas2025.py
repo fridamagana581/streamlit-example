@@ -110,7 +110,8 @@ if len(df_filtrado) > 0:
 
 else:
     st.warning("No hay datos con los filtros seleccionados.")
-    
+
+
 # --- 2. Top 5 Best-Selling Products by Sub-Category ---
 st.header('2. Top 5 Sub-Categorías Más Vendidas')
 # Group by 'Sub-Category' and sum 'Sales' to find best-selling products, then take the top 5
